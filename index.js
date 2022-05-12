@@ -35,10 +35,18 @@ async function run() {
     const appointmentCollection = client
       .db("doctorPortal")
       .collection("appointmentCollection");
+    const servicesCollection = client.db("doctorPortal").collection("services");
 
     app.post("/appointment", (req, res) => {
       const user = req.body;
       const result = appointmentCollection.insertOne(user);
+      res.send(result);
+    });
+
+    app.get("/services", async (req, res) => {
+      const qury = {};
+      const cursor = servicesCollection.find(qury);
+      const result = await cursor.toArray();
       res.send(result);
     });
   } catch {}
