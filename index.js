@@ -59,10 +59,29 @@ async function run() {
 
     // get api all services
     app.get("/services", async (req, res) => {
-      const qury = {};
-      const cursor = servicesCollection.find(qury);
+      const query = {};
+      const cursor = servicesCollection.find(query);
       const result = await cursor.toArray();
       res.send(result);
+    });
+
+    app.get("/abailable", async (req, res) => {
+      const date = req.query.data || "May 15, 2022";
+      const services = await servicesCollection.find().toArray();
+      const query = { date: date };
+      const booking = await appointmentCollection.find(query).toArray();
+
+      services.forEach((service) => {
+        const serviceBooking = booking.filter(
+          (b) => b.tretmentName === service.name
+        );
+        const booked = serviceBooking.map((item) => item.slot);
+        const abailable = service.slots.filter(
+          (item) => !booked.includes(item)
+        );
+        service.abailable = abailable;
+      });
+      res.send(services);
     });
   } catch {}
 }
