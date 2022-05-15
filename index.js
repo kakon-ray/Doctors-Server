@@ -37,12 +37,27 @@ async function run() {
       .collection("appointmentCollection");
     const servicesCollection = client.db("doctorPortal").collection("services");
 
-    app.post("/appointment", (req, res) => {
-      const user = req.body;
-      const result = appointmentCollection.insertOne(user);
-      res.send(result);
+    // add api . add appointed qury
+    app.post("/appointment", async (req, res) => {
+      const appointment = req.body;
+      // console.log(appointment);
+      const query = {
+        tretmentName: appointment.tretmentName,
+        data: appointment.data,
+        name: appointment.name,
+      };
+
+      const exist = await appointmentCollection.findOne(query);
+
+      if (exist) {
+        return res.send({ success: false, appointment: exist });
+      }
+
+      const result = await appointmentCollection.insertOne(appointment);
+      return res.send({ success: true, result });
     });
 
+    // get api all services
     app.get("/services", async (req, res) => {
       const qury = {};
       const cursor = servicesCollection.find(qury);
