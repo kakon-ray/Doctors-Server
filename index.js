@@ -92,6 +92,18 @@ async function run() {
       }
     });
 
+    // crate user to  admin api
+
+    app.put("/user/admin/:email", async (req, res) => {
+      const email = req.params.email;
+      const filter = { email: email };
+      const updateDoc = {
+        $set: { roll: "admin" },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
+
     // save user info database and create jwt token and send jwt token client side
 
     app.put("/user/:email", async (req, res) => {
@@ -144,7 +156,7 @@ async function run() {
 
     // get all users api use admin
 
-    app.get("/allusers", async (req, res) => {
+    app.get("/allusers", verifyJWT, async (req, res) => {
       const query = {};
       const cursor = userCollection.find(query);
       const result = await cursor.toArray();
