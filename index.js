@@ -141,6 +141,15 @@ async function run() {
       });
       res.send(services);
     });
+
+    // get all users api use admin
+
+    app.get("/allusers", async (req, res) => {
+      const query = {};
+      const cursor = userCollection.find(query);
+      const result = await cursor.toArray();
+      res.send(result);
+    });
   } catch {}
 }
 
