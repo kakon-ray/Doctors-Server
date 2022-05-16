@@ -1,5 +1,6 @@
 const express = require("express");
 require("dotenv").config();
+const jwt = require("jsonwebtoken");
 const cors = require("cors");
 const app = express();
 const { MongoClient, ServerApiVersion } = require("mongodb");
@@ -21,6 +22,24 @@ app.get("/", (req, res) => {
 app.listen(port, () => {
   console.log(`CROUD server is Running ${port}`);
 });
+
+// Verify JWT Token
+
+function verifyJWT(req, res, next) {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res.status(401).send({ message: "unauthorized access" });
+  }
+  const token = authorization.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res.status(403).send({ message: "Forbidden Access" });
+    }
+    // console.log("decoded", decoded);
+    req.decoded = decoded;
+    next();
+  });
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.BD_PASS}@cluster0.enqc8.mongodb.net/myFirstDatabase?retryWrites=true&w=majority`;
 const client = new MongoClient(uri, {
@@ -60,14 +79,20 @@ async function run() {
 
     // create api in dashboart doctor appointment
 
-    app.get("/myappointment", async (req, res) => {
+    app.get("/myappointment", verifyJWT, async (req, res) => {
       const email = req.query.email;
-      const query = { email: email };
-      const appointment = await appointmentCollection.find(query).toArray();
-      res.send(appointment);
+      const decodedEmail = req.decoded.email;
+
+      if (email === decodedEmail) {
+        const query = { email: email };
+        const appointment = await appointmentCollection.find(query).toArray();
+        res.send(appointment);
+      } else {
+        res.status(404).send({ message: "Forbedden Access" });
+      }
     });
 
-    // user update api create
+    // save user info database and create jwt token and send jwt token client side
 
     app.put("/user/:email", async (req, res) => {
       const email = req.params.email;
@@ -78,9 +103,13 @@ async function run() {
       const updateDoc = {
         $set: user,
       };
-      const result = userCollection.updateOne(filter, updateDoc, options);
+      const result = await userCollection.updateOne(filter, updateDoc, options);
 
-      res.send(result);
+      // send jwt token client side
+      var token = jwt.sign({ email: email }, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "10day",
+      });
+      res.send({ result, token });
     });
 
     // get api all services
