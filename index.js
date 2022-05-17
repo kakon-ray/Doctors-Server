@@ -58,6 +58,7 @@ async function run() {
     const userCollection = client.db("doctorPortal").collection("user");
 
     // add api . add appointed qury
+    // nice ei appointment er abailable appointment api create kora ace
     app.post("/appointment", async (req, res) => {
       const appointment = req.body;
       // console.log(appointment);
