@@ -92,16 +92,33 @@ async function run() {
       }
     });
 
-    // crate user to  admin api
+    // user admin ache kina saita check korar api
 
-    app.put("/user/admin/:email", async (req, res) => {
+    app.get("/admin/:email", async (req, res) => {
       const email = req.params.email;
-      const filter = { email: email };
-      const updateDoc = {
-        $set: { roll: "admin" },
-      };
-      const result = await userCollection.updateOne(filter, updateDoc);
-      res.send(result);
+      const user = await userCollection.findOne({ email: email });
+      const isAdmin = user.roll == "admin";
+      res.send({ admin: isAdmin });
+    });
+
+    // user ke admin korar api
+
+    app.put("/user/admin/:email", verifyJWT, async (req, res) => {
+      const email = req.params.email;
+      const requester = req.decoded.email;
+      const requesterAccount = await userCollection.findOne({
+        email: requester,
+      });
+      if (requesterAccount.roll == "admin") {
+        const filter = { email: email };
+        const updateDoc = {
+          $set: { roll: "admin" },
+        };
+        const result = await userCollection.updateOne(filter, updateDoc);
+        res.send(result);
+      } else {
+        return res.status(403).send({ message: "Forbidden Access" });
+      }
     });
 
     // save user info database and create jwt token and send jwt token client side
@@ -136,7 +153,7 @@ async function run() {
 
     app.get("/abailable", async (req, res) => {
       const date = req.query.date;
-      console.log(date);
+      // console.log(date);
       const services = await servicesCollection.find().toArray();
       const query = { date: date };
       const booking = await appointmentCollection.find(query).toArray();
