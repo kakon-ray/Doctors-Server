@@ -20,7 +20,7 @@ app.get("/", (req, res) => {
 
 // db users
 app.listen(port, () => {
-  console.log(`CROUD server is Running ${port}`);
+  console.log(`Doctor Portal server is Running ${port}`);
 });
 
 // Verify JWT Token
