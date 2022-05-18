@@ -56,6 +56,21 @@ async function run() {
       .collection("appointmentCollection");
     const servicesCollection = client.db("doctorPortal").collection("services");
     const userCollection = client.db("doctorPortal").collection("user");
+    const doctorCollection = client.db("doctorPortal").collection("doctor");
+
+    // create verify admin middlewhite
+
+    const verifyAdmin = async (req, res, next) => {
+      const requester = req.decoded.email;
+      const requesterAccount = await userCollection.findOne({
+        email: requester,
+      });
+      if (requesterAccount.roll == "admin") {
+        next();
+      } else {
+        res.status(404).send({ message: "Forbedden Access" });
+      }
+    };
 
     // add api . add appointed qury
     // nice ei appointment er abailable appointment api create kora ace
@@ -104,22 +119,14 @@ async function run() {
 
     // user ke admin korar api
 
-    app.put("/user/admin/:email", verifyJWT, async (req, res) => {
+    app.put("/user/admin/:email", verifyJWT, verifyAdmin, async (req, res) => {
       const email = req.params.email;
-      const requester = req.decoded.email;
-      const requesterAccount = await userCollection.findOne({
-        email: requester,
-      });
-      if (requesterAccount.roll == "admin") {
-        const filter = { email: email };
-        const updateDoc = {
-          $set: { roll: "admin" },
-        };
-        const result = await userCollection.updateOne(filter, updateDoc);
-        res.send(result);
-      } else {
-        return res.status(403).send({ message: "Forbidden Access" });
-      }
+      const filter = { email: email };
+      const updateDoc = {
+        $set: { roll: "admin" },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
     });
 
     // save user info database and create jwt token and send jwt token client side
@@ -142,10 +149,10 @@ async function run() {
       res.send({ result, token });
     });
 
-    // get api all services
+    // get api all services only name
     app.get("/services", async (req, res) => {
       const query = {};
-      const cursor = servicesCollection.find(query);
+      const cursor = servicesCollection.find(query).project({ name: 1 });
       const result = await cursor.toArray();
       res.send(result);
     });
@@ -178,6 +185,28 @@ async function run() {
       const query = {};
       const cursor = userCollection.find(query);
       const result = await cursor.toArray();
+      res.send(result);
+    });
+
+    // get all doctor api
+
+    app.get("/doctor", verifyJWT, verifyAdmin, async (req, res) => {
+      const alldoctor = await doctorCollection.find().toArray();
+      res.send(alldoctor);
+    });
+
+    // add doctor api
+    app.post("/doctor", verifyJWT, verifyAdmin, async (req, res) => {
+      const doctor = req.body;
+      const result = await doctorCollection.insertOne(doctor);
+      res.send(result);
+    });
+
+    // delete doctor api
+    app.delete("/doctor/:email", verifyJWT, verifyAdmin, async (req, res) => {
+      const email = req.params.email;
+      const query = { email: email };
+      const result = await doctorCollection.deleteOne(query);
       res.send(result);
     });
   } catch {}
