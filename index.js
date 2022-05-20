@@ -209,6 +209,16 @@ async function run() {
       const result = await doctorCollection.deleteOne(query);
       res.send(result);
     });
+
+    // ==================== Payment Method ==========================
+
+    // get data specific id
+    app.get("/appointment/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await appointmentCollection.findOne(query);
+      res.send(result);
+    });
   } catch {}
 }
 
