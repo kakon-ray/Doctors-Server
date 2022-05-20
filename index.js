@@ -58,6 +58,7 @@ async function run() {
     const servicesCollection = client.db("doctorPortal").collection("services");
     const userCollection = client.db("doctorPortal").collection("user");
     const doctorCollection = client.db("doctorPortal").collection("doctor");
+    const paymentCollection = client.db("doctorPortal").collection("payments");
 
     // create verify admin middlewhite
 
@@ -219,6 +220,25 @@ async function run() {
       const query = { _id: ObjectId(id) };
       const result = await appointmentCollection.findOne(query);
       res.send(result);
+    });
+
+    app.patch("/appointment/:id", verifyJWT, async (req, res) => {
+      const id = req.params.id;
+      const peyment = req.body;
+      const filter = { _id: ObjectId(id) };
+
+      const updateDoc = {
+        $set: {
+          paid: true,
+          transactionId: peyment.transactionId,
+        },
+      };
+      const updatedResult = await appointmentCollection.updateOne(
+        filter,
+        updateDoc
+      );
+      const result = await paymentCollection.insertOne(peyment);
+      res.send(updateDoc);
     });
 
     app.post("/create-payment-intent", verifyJWT, async (req, res) => {
