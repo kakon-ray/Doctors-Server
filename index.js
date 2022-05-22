@@ -214,7 +214,7 @@ async function run() {
 
     // ==================== Payment Method ==========================
 
-    // get data specific id
+    // get data specific id and create api
     app.get("/appointment/:id", verifyJWT, async (req, res) => {
       const id = req.params.id;
       const query = { _id: ObjectId(id) };
